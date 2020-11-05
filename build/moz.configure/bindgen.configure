@@ -188,6 +188,9 @@ def bindgen_libclang_path(libclang_path, clang, library_name_info, host):
     if host.os == "OpenBSD":
         libclang_choices.append("libclang.so.*.*")
 
+    if host.os == "Haiku":
+        libclang_choices.append("libclang.so.*")
+
     candidates = []
     if not libclang_path:
         # Try to find libclang_path based on clang search dirs.
