@@ -27,6 +27,8 @@ elif "MOZILLABUILD" in os.environ:
     _current_shell = os.environ["MOZILLABUILD"] + "/msys/bin/sh.exe"
 elif "COMSPEC" in os.environ:
     _current_shell = os.environ["COMSPEC"]
+elif os.uname()[0] == 'Haiku':
+    _current_shell = '/bin/bash'
 else:
     raise Exception("Could not detect environment shell!")
 

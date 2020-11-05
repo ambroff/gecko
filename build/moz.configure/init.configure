@@ -715,6 +715,8 @@ def split_triplet(triplet, allow_msvc=False):
         # windows-msvc is only opt-in for the caller of this function until
         # full support in bug 1617793.
         canonical_os = canonical_kernel = "WINNT"
+    elif os.startswith('haiku'):
+        canonical_os = canonical_kernel = 'Haiku'
     elif os.startswith("darwin"):
         canonical_kernel = "Darwin"
         canonical_os = "OSX"
