@@ -16,6 +16,7 @@ sensors) in Python. Supported platforms:
  - NetBSD
  - Sun Solaris
  - AIX
+ - Haiku
 
 Works with Python versions from 2.6 to 3.4+.
 """
@@ -84,6 +85,7 @@ from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
+from ._common import HAIKU
 from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD  # NOQA
@@ -179,7 +181,10 @@ elif AIX:
     # via sys.modules.
     PROCFS_PATH = "/proc"
 
-else:  # pragma: no cover
+elif HAIKU:
+    from . import _pshaiku as _psplatform
+
+else:  # pragma: no coverf
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
