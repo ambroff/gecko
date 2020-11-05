@@ -282,6 +282,17 @@ class VirtualenvManager(VirtualenvHelper):
                 % (self.virtualenv_root, result)
             )
 
+        # FIXME: Remove this after fixing virtualenv for Haiku
+        #
+        # For some reason virtualenv is re-creating the non-packaged directory
+        # in virtualenvs created on Haiku.
+        self._log_process_output([
+            'ln',
+            '-snf',
+            os.path.join(self.virtualenv_root, 'non-packaged', 'bin'),
+            os.path.join(self.virtualenv_root, 'bin')
+        ])
+
         self.write_exe_info(python)
 
         return self.virtualenv_root

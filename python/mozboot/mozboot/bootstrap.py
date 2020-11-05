@@ -39,6 +39,7 @@ from mozboot.opensuse import OpenSUSEBootstrapper
 from mozboot.debian import DebianBootstrapper
 from mozboot.freebsd import FreeBSDBootstrapper
 from mozboot.gentoo import GentooBootstrapper
+from mozboot.haiku import HaikuBootstrapper
 from mozboot.osx import OSXBootstrapper
 from mozboot.openbsd import OpenBSDBootstrapper
 from mozboot.archlinux import ArchlinuxBootstrapper
@@ -258,6 +259,10 @@ class Bootstrapper(object):
 
             cls = OSXBootstrapper
             args["version"] = osx_version
+
+        elif sys.platform.startswith("haiku"):
+            cls = HaikuBootstrapper
+            args["version"] = platform.uname()[2]
 
         elif sys.platform.startswith("openbsd"):
             cls = OpenBSDBootstrapper
@@ -513,6 +518,8 @@ class Bootstrapper(object):
             self.instance.suggest_install_distutils()
             valid = False
         pip3 = which("pip3")
+        if not pip3:
+            pip3 = which('pip3.7')
         if not pip3:
             print("ERROR: Could not find pip3.", file=sys.stderr)
             self.instance.suggest_install_pip3()

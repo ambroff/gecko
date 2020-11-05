@@ -133,6 +133,9 @@ elif system == "Linux":
 elif system in ["DragonFly", "FreeBSD", "NetBSD", "OpenBSD"]:
     info["os"] = "bsd"
     version = os_version = sys.platform
+elif system == 'Haiku':
+    info['os'] = 'haiku'
+    os_version = version
 elif system == "Darwin":
     (release, versioninfo, machine) = platform.mac_ver()
     version = "OS X %s" % release

@@ -30,6 +30,8 @@ elif "COMSPEC" in os.environ:
 elif sys.platform != "win32":
     # Fall back to a standard shell.
     _current_shell = "/bin/sh"
+elif os.uname()[0] == 'Haiku':
+    _current_shell = '/bin/bash'
 else:
     raise Exception("Could not detect environment shell!")
 
