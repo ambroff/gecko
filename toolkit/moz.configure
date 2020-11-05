@@ -191,7 +191,7 @@ set_define("MOZ_JACK", depends_if(jack)(lambda _: True))
 # ==============================================================
 @depends(target)
 def pulseaudio_default(target):
-    return target.os not in ("WINNT", "OSX", "Android", "OpenBSD")
+    return target.os not in ("WINNT", "OSX", "Android", "OpenBSD", "Haiku")
 
 
 option(
