@@ -873,7 +873,7 @@ def real_host(value, shell):
     try:
         return split_triplet(host)
     except ValueError as e:
-        die(e.message)
+        die(e)
 
 
 host = help_host_target | real_host
