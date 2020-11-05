@@ -21,6 +21,8 @@ class HaikuBootstrapper(BaseBootstrapper):
 
         self.browser_packages = [
             'llvm9',
+            'llvm9_clang',
+            'llvm9_lld',
             'nasm',
             'yasm',
         ]
