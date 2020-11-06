@@ -260,6 +260,8 @@ set_config("L10NBASEDIR", l10n_base)
 def toolkit_choices(target):
     if target.os == "WINNT":
         return ("cairo-windows",)
+    if target.os == "Haiku":
+        return ("cairo-haiku",)
     elif target.os == "OSX":
         return ("cairo-cocoa",)
     elif target.os == "Android":
