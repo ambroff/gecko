@@ -301,7 +301,7 @@ static inline PRInt32 _MD_ATOMIC_SET(PRInt32 *ptr, PRInt32 nv)
 #endif /* __arm__ */
 
 #define USE_SETJMP
-#if (defined(__GLIBC__) && __GLIBC__ >= 2) || defined(ANDROID)
+#if (defined(__GLIBC__) && __GLIBC__ >= 2) || defined(ANDROID) || defined(__HAIKU__)
 #define _PR_POLL_AVAILABLE
 #endif
 #undef _PR_USE_POLL
@@ -322,7 +322,7 @@ static inline PRInt32 _MD_ATOMIC_SET(PRInt32 *ptr, PRInt32 nv)
 #define _PR_HAVE_GETADDRINFO
 #define _PR_INET6_PROBE
 #endif
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(__HAIKU__)
 #define _PR_HAVE_SYSV_SEMAPHORES
 #define PR_HAVE_SYSV_NAMED_SHARED_MEMORY
 #endif
