@@ -49,7 +49,7 @@ PR_BEGIN_EXTERN_C
 #elif defined(HPUX)
 #include "md/_hpux.h"
 
-#elif defined(LINUX) || defined(__GNU__) || defined(__GLIBC__)
+#elif defined(LINUX) || defined(__GNU__) || defined(__GLIBC__) || defined(__HAIKU__)
 #include "md/_linux.h"
 
 #elif defined(DARWIN)

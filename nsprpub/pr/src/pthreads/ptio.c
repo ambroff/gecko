@@ -28,7 +28,7 @@
 #include <sys/uio.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#if defined(DARWIN)
+#if defined(DARWIN) || defined(__HAIKU__)
 #include <sys/utsname.h> /* for uname */
 #endif
 #if defined(SOLARIS) || defined(UNIXWARE)
@@ -183,7 +183,7 @@ static PRBool _pr_ipv6_v6only_on_by_default;
     || defined(LINUX) || defined(__GNU__) || defined(__GLIBC__) \
     || defined(FREEBSD) || defined(NETBSD) || defined(OPENBSD) \
     || defined(BSDI) || defined(NTO) || defined(DARWIN) \
-    || defined(UNIXWARE) || defined(RISCOS)
+    || defined(UNIXWARE) || defined(RISCOS)  || defined(__HAIKU__)
 #define _PRSelectFdSetArg_t fd_set *
 #else
 #error "Cannot determine architecture"
@@ -3477,7 +3477,7 @@ static PRIOMethods _pr_socketpollfd_methods = {
     || defined(LINUX) || defined(__GNU__) || defined(__GLIBC__) \
     || defined(AIX) || defined(FREEBSD) || defined(NETBSD) \
     || defined(OPENBSD) || defined(BSDI) || defined(NTO) \
-    || defined(DARWIN) || defined(UNIXWARE) || defined(RISCOS)
+    || defined(DARWIN) || defined(UNIXWARE) || defined(RISCOS) || defined(__HAIKU__)
 #define _PR_FCNTL_FLAGS O_NONBLOCK
 #else
 #error "Can't determine architecture"
