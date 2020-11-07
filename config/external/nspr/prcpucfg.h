@@ -16,6 +16,8 @@
 #  include "md/_win95.cfg"
 #elif defined(__FreeBSD__)
 #  include "md/_freebsd.cfg"
+#elif defined(__HAIKU__)
+#  include "md/_haiku.cfg"
 #elif defined(__NetBSD__)
 #  include "md/_netbsd.cfg"
 #elif defined(__OpenBSD__)
