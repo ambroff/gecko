@@ -24,6 +24,10 @@ if CONFIG["HOST_OS_ARCH"] != "WINNT":
         "nsinstall.c",
         "pathsub.c",
     ]
+
+    if CONFIG["HOST_OS_ARCH"] == "Haiku":
+        HOST_CFLAGS += ["-fPIC"]
+
     HostProgram("nsinstall_real")
 
 PYTHON_UNITTEST_MANIFESTS += [
