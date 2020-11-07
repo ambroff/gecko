@@ -39,6 +39,8 @@ elif CONFIG["OS_TARGET"] == "Haiku":
     DEFINES["HAVE_SOCKLEN_T"] = True
     DEFINES["HAVE_POINTER_LOCALTIME_R"] = True
     DEFINES[CONFIG["OS_TARGET"].upper()] = True
+    # FIXME: Need this?
+    #SOURCES += ["/nsprpub/pr/src/md/unix/%s.c" % CONFIG["OS_TARGET"].lower()]
 elif CONFIG["OS_TARGET"] == "Darwin":
     OS_LIBS += ["-framework CoreServices"]
     # See also IncreaseDescriptorLimits in toolkit/xre/nsAppRunner.cpp
@@ -247,6 +249,7 @@ EXPORTS.nspr += [
 EXPORTS.nspr.md += [
     "/nsprpub/pr/include/md/_darwin.cfg",
     "/nsprpub/pr/include/md/_freebsd.cfg",
+    "/nsprpub/pr/include/md/_haiku.cfg",
     "/nsprpub/pr/include/md/_linux.cfg",
     "/nsprpub/pr/include/md/_netbsd.cfg",
     "/nsprpub/pr/include/md/_openbsd.cfg",
