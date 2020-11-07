@@ -261,7 +261,11 @@ def toolkit_choices(target):
     if target.os == "WINNT":
         return ("cairo-windows",)
     if target.os == "Haiku":
-        return ("cairo-haiku",)
+        # KWA FIXME: Just using headless for now. Once the rest is building
+        # then I'll define cairo-haiku, which will require writing widget
+        # definitions in widgets/haiku.
+        #return ("cairo-haiku",)
+        return ("headless",)
     elif target.os == "OSX":
         return ("cairo-cocoa",)
     elif target.os == "Android":
