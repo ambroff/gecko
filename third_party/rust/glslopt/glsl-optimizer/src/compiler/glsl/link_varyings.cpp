@@ -1995,7 +1995,7 @@ varying_matches::assign_locations(struct gl_shader_program *prog,
           (previous_packing_class != this->matches[i].packing_class) ||
           (this->matches[i].packing_order == PACKING_ORDER_VEC3 &&
            dont_pack_vec3)) {
-         *location = ALIGN(*location, 4);
+         *location = ALIGN_TO(*location, 4);
       }
 
       previous_var_xfb = var->data.is_xfb;
@@ -2029,7 +2029,7 @@ varying_matches::assign_locations(struct gl_shader_program *prog,
             break;
          }
 
-         *location = ALIGN(*location + 1, 4);
+         *location = ALIGN_TO(*location + 1, 4);
          slot_end = *location + num_components - 1;
       }
 

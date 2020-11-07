@@ -73,6 +73,18 @@
 # define UTIL_ARCH_BIG_ENDIAN 1
 #endif
 
+#elif defined(__HAIKU__)
+
+#include <posix/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+# define UTIL_ARCH_LITTLE_ENDIAN 1
+# define UTIL_ARCH_BIG_ENDIAN 0
+#elif BYTE_ORDER == BIG_ENDIAN
+# define UTIL_ARCH_LITTLE_ENDIAN 0
+# define UTIL_ARCH_BIG_ENDIAN 1
+#endif
+
 #elif defined(_WIN32) || defined(ANDROID)
 
 #define UTIL_ARCH_LITTLE_ENDIAN 1
