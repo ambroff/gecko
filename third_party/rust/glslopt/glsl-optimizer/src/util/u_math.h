@@ -689,14 +689,14 @@ util_memcpy_cpu_to_le32(void * restrict dest, const void * restrict src, size_t 
  * \sa ROUND_DOWN_TO()
  */
 static inline uintptr_t
-ALIGN(uintptr_t value, int32_t alignment)
+ALIGN_TO(uintptr_t value, int32_t alignment)
 {
    assert(util_is_power_of_two_nonzero(alignment));
    return (((value) + (alignment) - 1) & ~((alignment) - 1));
 }
 
 /**
- * Like ALIGN(), but works with a non-power-of-two alignment.
+ * Like ALIGN_TO(), but works with a non-power-of-two alignment.
  */
 static inline uintptr_t
 ALIGN_NPOT(uintptr_t value, int32_t alignment)
@@ -714,7 +714,7 @@ ALIGN_NPOT(uintptr_t value, int32_t alignment)
  * \param value  Value to be rounded
  * \param alignment  Alignment value to be used.  This must be a power of two.
  *
- * \sa ALIGN()
+ * \sa ALIGN_TO()
  */
 static inline uintptr_t
 ROUND_DOWN_TO(uintptr_t value, int32_t alignment)
