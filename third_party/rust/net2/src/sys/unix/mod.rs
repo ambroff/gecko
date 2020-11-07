@@ -36,7 +36,7 @@ pub struct Socket {
 }
 
 impl Socket {
-    #[cfg(not(any(target_os = "solaris", target_os = "emscripten")))]
+    #[cfg(not(any(target_os = "solaris", target_os = "emscripten", target_os ="haiku")))]
     pub fn new(family: c_int, ty: c_int) -> io::Result<Socket> {
         unsafe {
             // Linux >2.6.26 overloads the type argument to accept SOCK_CLOEXEC,
@@ -58,7 +58,7 @@ impl Socket {
 
     // ioctl(FIOCLEX) is not supported by Solaris/Illumos or emscripten,
     // use fcntl(FD_CLOEXEC) instead
-    #[cfg(any(target_os = "solaris", target_os = "emscripten"))]
+    #[cfg(any(target_os = "solaris", target_os = "emscripten", target_os = "haiku"))]
     pub fn new(family: c_int, ty: c_int) -> io::Result<Socket> {
         unsafe {
             let fd = try!(::cvt(libc::socket(family, ty, 0)));
