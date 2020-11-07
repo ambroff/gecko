@@ -1535,12 +1535,17 @@ def color_cflags(info):
     # value changes to e.g. "<x>=always", exact string match may fail and
     # multiple color flags could be added. So examine downstream consumers
     # before adding flags to return values.
-    if info.type == "gcc":
-        return "-fdiagnostics-color"
-    elif info.type == "clang":
-        return "-fcolor-diagnostics"
-    else:
-        return ""
+
+    # KWA FIXME: On Haiku this build is currently invoking clang for
+    # compilation and gcc to link, so this particular function doesn't quite
+    # work because it will fail depending on which target is built.
+    # if info.type == "gcc":
+    #     return "-fdiagnostics-color"
+    # elif info.type == "clang":
+    #     return "-fcolor-diagnostics"
+    # else:
+    #     return ""
+    return ""
 
 
 set_config("COLOR_CFLAGS", color_cflags)
