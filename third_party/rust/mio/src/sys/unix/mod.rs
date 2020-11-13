@@ -19,6 +19,12 @@ mod kqueue;
           target_os = "netbsd", target_os = "openbsd"))]
 pub use self::kqueue::{Events, Selector};
 
+#[cfg(target_os = "haiku")]
+mod haiku;
+
+#[cfg(target_os = "haiku")]
+pub use self::haiku::{Events, Selector};
+
 mod awakener;
 mod eventedfd;
 mod io;

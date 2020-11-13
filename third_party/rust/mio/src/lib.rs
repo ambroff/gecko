@@ -112,6 +112,10 @@ extern crate net2;
 extern crate iovec;
 extern crate slab;
 
+#[macro_use]
+#[cfg(target_os = "haiku")]
+extern crate bitflags;
+
 #[cfg(target_os = "fuchsia")]
 extern crate fuchsia_zircon as zircon;
 #[cfg(target_os = "fuchsia")]
