@@ -2,6 +2,7 @@ use std::cmp;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::time::Duration;
 use sys::unix::cvt;
+use std::cell::RefCell;
 
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::RawFd;
@@ -18,7 +19,7 @@ static NEXT_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
 pub struct Selector {
     id: usize,
-    fds: Vec<PollFd>,
+    fds: RefCell<Vec<PollFd>>,
 }
 
 impl Selector {
@@ -27,6 +28,7 @@ impl Selector {
 
         Ok(Selector {
             id: id,
+            fds: RefCell::new(vec![]),
         })
     }
 
@@ -36,9 +38,13 @@ impl Selector {
             .map(|to| cmp::min(millis(to), i32::MAX as u64) as i32)
             .unwrap_or(-1);
 
-        let result = cvt(libc::poll(nil, 0, timeout_ms));
-        
-        Ok(evts.coalesce(awakener))
+        unsafe {
+            let result = poll(self.fds.borrow_mut(), timeout_ms);
+            match result {
+                Ok(nfds) => Ok(nfds > 0),
+                Err(err) => Err(err),
+            }
+        }
     }
 
     pub fn id(&self) -> usize {
@@ -46,14 +52,17 @@ impl Selector {
     }
 
     pub fn register(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
-        Ok(())
+        self.reregister(fd, token, interests, opts)
     }
 
     pub fn reregister(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
+        self.deregister(fd);
+        self.fds.push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
         Ok(())
     }
 
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
+        self.fds.borrow_mut().retain(|&p| p.pollfd.fd != fd);
         Ok(())
     }
 }
@@ -64,10 +73,10 @@ impl AsRawFd for Selector {
     }
 }
 
-// impl Drop for Selector {
-//     fn drop(&mut self) {
-//     }
-// }
+impl Drop for Selector {
+    fn drop(&mut self) {
+    }
+}
 
 pub struct Events {
 }
@@ -100,10 +109,6 @@ impl Events {
 
     pub fn push_event(&mut self, event: Event) {
     }
-
-    fn coalesce(&mut self, awakener: Token) -> bool {
-        false
-    }
 }
 
 const NANOS_PER_MILLI: u32 = 1_000_000;
@@ -120,19 +125,24 @@ pub fn millis(duration: Duration) -> u64 {
     duration.as_secs().saturating_mul(MILLIS_PER_SEC).saturating_add(millis as u64)
 }
 
-fn ioevent_to_pollflag(interest: Ready, opts: PollOpt) -> u32 {
-    let mut kind = 0;
+fn ioevent_to_pollflag(interest: Ready, opts: PollOpt) -> PollFlags {
+    // let mut kind = 0;
 
+    // if interest.is_readable() {
+    //     kind |= PollFlags::POLLIN;
+    // }
+
+    // if interest.is_writable() {
+    //     kind |= PollFlags::POLLOUT;
+    // }
+
+    // // KWA: FIXME: map other flags
+    // kind
     if interest.is_readable() {
-        kind |= PollFlags::POLLIN;
+        PollFlags::POLLIN
+    } else {
+        PollFlags::POLLOUT
     }
-
-    if interest.is_writable() {
-        kind |= PollFlags::POLLOUT;
-    }
-
-    // KWA: FIXME: map other flags
-    kind
 }
 
 // NOTE: The stuff below is copied from the nix rust library, version 0.18. That
@@ -148,8 +158,9 @@ fn ioevent_to_pollflag(interest: Ready, opts: PollOpt) -> u32 {
 ///
 /// After a call to `poll` or `ppoll`, the events that occured can be
 /// retrieved by calling [`revents()`](#method.revents) on the `PollFd`.
+/// #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct PollFd {
     pollfd: libc::pollfd,
 }
@@ -309,7 +320,7 @@ libc_bitflags! {
 /// in timeout means an infinite timeout.  Specifying a timeout of zero
 /// causes `poll()` to return immediately, even if no file descriptors are
 /// ready.
-pub fn poll(fds: &mut [PollFd], timeout: libc::c_int) -> Result<libc::c_int> {
+pub fn poll(fds: &mut Vec<PollFd>, timeout: libc::c_int) -> io::Result<libc::c_int> {
     let res = unsafe {
         libc::poll(fds.as_mut_ptr() as *mut libc::pollfd,
                    fds.len() as libc::nfds_t,
