@@ -2,7 +2,7 @@ use std::cmp;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::time::Duration;
 use sys::unix::cvt;
-use std::cell::RefCell;
+use std::sync::Mutex;
 
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::RawFd;
@@ -19,7 +19,7 @@ static NEXT_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
 pub struct Selector {
     id: usize,
-    fds: RefCell<Vec<PollFd>>,
+    fds: Mutex<Vec<PollFd>>,
 }
 
 impl Selector {
@@ -28,7 +28,7 @@ impl Selector {
 
         Ok(Selector {
             id: id,
-            fds: RefCell::new(vec![]),
+            fds: Mutex::new(vec![]),
         })
     }
 
@@ -38,12 +38,17 @@ impl Selector {
             .map(|to| cmp::min(millis(to), i32::MAX as u64) as i32)
             .unwrap_or(-1);
 
-        unsafe {
-            let result = poll(self.fds.borrow_mut(), timeout_ms);
-            match result {
-                Ok(nfds) => Ok(nfds > 0),
-                Err(err) => Err(err),
-            }
+        match self.fds.lock() {
+            Ok(poll_fds) => {
+                let result = poll(&mut poll_fds, timeout_ms);
+                match result {
+                    Ok(nfds) => Ok(nfds > 0),
+                    Err(err) => Err(err),
+                }
+            },
+            //Err(err) => Err(err),
+            // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
+            Err(_) => panic!("KWA Unable to acquire lock in Selector::select"),
         }
     }
 
@@ -57,13 +62,25 @@ impl Selector {
 
     pub fn reregister(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
         self.deregister(fd);
-        self.fds.push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
-        Ok(())
+        match self.fds.lock() {
+            Ok(poll_fds) => {
+                (*poll_fds).push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
+                Ok(())
+            },
+            // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
+            Err(_) => panic!("KWA unable to acquire lock in Selector::reregister()"),
+        }
     }
 
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
-        self.fds.borrow_mut().retain(|&p| p.pollfd.fd != fd);
-        Ok(())
+        match self.fds.lock() {
+            Ok(poll_fds) => {
+                &mut (*poll_fds).retain(|&p| p.pollfd.fd != fd);
+                Ok(())
+            },
+            // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
+            Err(_) => panic!("KWA unable to acquire lock in Selector::reregister()"),
+        }
     }
 }
 
