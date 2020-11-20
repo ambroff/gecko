@@ -39,7 +39,7 @@ impl Selector {
             .unwrap_or(-1);
 
         match self.fds.lock() {
-            Ok(poll_fds) => {
+            Ok(mut poll_fds) => {
                 let result = poll(&mut poll_fds, timeout_ms);
                 match result {
                     Ok(nfds) => Ok(nfds > 0),
@@ -63,8 +63,9 @@ impl Selector {
     pub fn reregister(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
         self.deregister(fd);
         match self.fds.lock() {
-            Ok(poll_fds) => {
-                (*poll_fds).push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
+            Ok(mut poll_fds) => {
+                let l = &mut *poll_fds;
+                l.push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
                 Ok(())
             },
             // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
@@ -74,8 +75,9 @@ impl Selector {
 
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
         match self.fds.lock() {
-            Ok(poll_fds) => {
-                &mut (*poll_fds).retain(|&p| p.pollfd.fd != fd);
+            Ok(mut poll_fds) => {
+                let l = &mut *poll_fds;
+                l.retain(|&p| p.pollfd.fd != fd);
                 Ok(())
             },
             // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
