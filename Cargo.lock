@@ -3050,9 +3050,8 @@ dependencies = [
 [[package]]
 name = "mio"
 version = "0.6.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "302dec22bcf6bae6dfb69c647187f4b4d0fb6f535521f7bc022430ce8e12008f"
 dependencies = [
+ "bitflags",
  "cfg-if 0.1.10",
  "fuchsia-zircon",
  "fuchsia-zircon-sys",

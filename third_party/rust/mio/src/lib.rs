@@ -112,7 +112,7 @@ extern crate net2;
 extern crate iovec;
 extern crate slab;
 
-#[macro_use]
+//#[macro_use]
 #[cfg(target_os = "haiku")]
 extern crate bitflags;
 
