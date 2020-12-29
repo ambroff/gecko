@@ -1,8 +1,9 @@
 use std::cmp;
+use std::collections::HashMap;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::time::Duration;
 use sys::unix::cvt;
-use std::sync::Mutex;
 
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::RawFd;
@@ -17,9 +18,14 @@ use event_imp::Event;
 /// operation will return with an error. This matches windows behavior.
 static NEXT_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
+struct State {
+    poll_fds: Vec<PollFd>,
+    token_map: HashMap<i32, usize>,
+}
+
 pub struct Selector {
     id: usize,
-    fds: Mutex<Vec<PollFd>>,
+    state: Mutex<State>,
 }
 
 impl Selector {
@@ -28,7 +34,7 @@ impl Selector {
 
         Ok(Selector {
             id: id,
-            fds: Mutex::new(vec![]),
+            state: Mutex::new(State{poll_fds: vec![], token_map: HashMap::new()}),
         })
     }
 
@@ -38,11 +44,15 @@ impl Selector {
             .map(|to| cmp::min(millis(to), i32::MAX as u64) as i32)
             .unwrap_or(-1);
 
-        match self.fds.lock() {
-            Ok(mut poll_fds) => {
-                let result = poll(&mut poll_fds, timeout_ms);
+        match self.state.lock() {
+            Ok(mut state) => {
+                let result = poll(&mut state.poll_fds, timeout_ms);
                 match result {
-                    Ok(nfds) => Ok(nfds > 0),
+                    Ok(nfds) => {
+                        evts.clear();
+                        // KWA: FIXME: Poppulate evts now with results
+                        Ok(nfds > 0)
+                    },
                     Err(err) => Err(err),
                 }
             },
@@ -61,23 +71,27 @@ impl Selector {
     }
 
     pub fn reregister(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
-        self.deregister(fd);
-        match self.fds.lock() {
-            Ok(mut poll_fds) => {
-                let l = &mut *poll_fds;
-                l.push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
-                Ok(())
+        match self.deregister(fd) {
+            Ok(_) => match self.state.lock() {
+                Ok(mut state) => {
+                    let l = &mut (*state).poll_fds;
+                    l.push(PollFd::new(fd, ioevent_to_pollflag(interests, opts)));
+                    (*state).token_map.insert(fd, usize::from(token));
+                    Ok(())
+                },
+                // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
+                Err(_) => panic!("KWA unable to acquire lock in Selector::reregister()"),
             },
-            // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
-            Err(_) => panic!("KWA unable to acquire lock in Selector::reregister()"),
+            Err(_) => panic!("KWA unable to deregister"),
         }
     }
 
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
-        match self.fds.lock() {
-            Ok(mut poll_fds) => {
-                let l = &mut *poll_fds;
+        match self.state.lock() {
+            Ok(mut state) => {
+                let l = &mut (*state).poll_fds;
                 l.retain(|&p| p.pollfd.fd != fd);
+                (*state).token_map.remove(&fd);
                 Ok(())
             },
             // FIXME: KWA: Figure out how to return a io::Error here given this std::sync::PoisonError
@@ -97,16 +111,24 @@ impl Drop for Selector {
     }
 }
 
+struct PendingEvent {
+    flags: PollFlags,
+    token: u64,
+}
+
 pub struct Events {
+    events: Vec<PendingEvent>,
 }
 
 impl Events {
     pub fn len(&self) -> usize {
-        0
+        self.events.len()
     }
 
     pub fn with_capacity(u: usize) -> Events {
-        Events{}
+        Events {
+            events: Vec::with_capacity(u)
+        }
     }
 
     pub fn get(&self, idx: usize) -> Option<Event> {
@@ -116,17 +138,22 @@ impl Events {
     }
 
     pub fn capacity(&self) -> usize {
-        0
+        self.events.capacity()
     }
 
     pub fn is_empty(&self) -> bool {
-        true
+        self.events.is_empty()
     }
 
     pub fn clear(&mut self) {
+        unsafe { self.events.set_len(0); }
     }
 
     pub fn push_event(&mut self, event: Event) {
+        self.events.push(PendingEvent {
+            flags: ioevent_to_pollflag(event.readiness(), PollOpt::empty()),
+            token: usize::from(event.token()) as u64,
+        })
     }
 }
 
@@ -144,7 +171,7 @@ pub fn millis(duration: Duration) -> u64 {
     duration.as_secs().saturating_mul(MILLIS_PER_SEC).saturating_add(millis as u64)
 }
 
-fn ioevent_to_pollflag(interest: Ready, opts: PollOpt) -> PollFlags {
+fn ioevent_to_pollflag(interest: Ready, _opts: PollOpt) -> PollFlags {
     // let mut kind = 0;
 
     // if interest.is_readable() {
