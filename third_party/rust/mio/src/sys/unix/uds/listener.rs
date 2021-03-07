@@ -42,7 +42,8 @@ pub(crate) fn accept(listener: &net::UnixListener) -> io::Result<(UnixStream, So
         target_os = "ios",
         target_os = "macos",
         target_os = "netbsd",
-        target_os = "solaris"
+        target_os = "solaris",
+        target_os = "haiku",
     )))]
     let socket = {
         let flags = libc::SOCK_NONBLOCK | libc::SOCK_CLOEXEC;
@@ -59,7 +60,8 @@ pub(crate) fn accept(listener: &net::UnixListener) -> io::Result<(UnixStream, So
         target_os = "ios",
         target_os = "macos",
         target_os = "netbsd",
-        target_os = "solaris"
+        target_os = "solaris",
+        target_os = "haiku"
     ))]
     let socket = syscall!(accept(
         listener.as_raw_fd(),

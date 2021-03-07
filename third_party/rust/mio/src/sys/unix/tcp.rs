@@ -1,7 +1,7 @@
 use std::io;
 use std::mem::{size_of, MaybeUninit};
 use std::net::{self, SocketAddr};
-use std::os::unix::io::{AsRawFd, FromRawFd};
+use std::os::unix::io::{FromRawFd, AsRawFd};
 
 use crate::sys::unix::net::{new_ip_socket, socket_addr, to_socket_addr};
 
@@ -84,6 +84,7 @@ pub fn accept(listener: &net::TcpListener) -> io::Result<(net::TcpStream, Socket
         // (yet). See https://github.com/rust-lang/libc/issues/1636.
         target_os = "netbsd",
         target_os = "solaris",
+        target_os = "haiku",
     ))]
     let stream = {
         syscall!(accept(

@@ -207,7 +207,7 @@ where
          * On Solaris O_NDELAY and O_NONBLOCK behave the same for sockets.
          * For more details, see read(2) man page.
          */
-        libc::O_NONBLOCK | libc::O_NDELAY
+        libc::O_NONBLOCK //| libc::O_NDELAY
     } else {
         libc::O_NONBLOCK
     };
