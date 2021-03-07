@@ -7,8 +7,18 @@
 //!
 //! [portability guidelines]: ../struct.Poll.html#portability
 
-mod tcp;
-mod udp;
+cfg_tcp! {
+    mod tcp;
+    pub use self::tcp::{TcpListener, TcpStream};
+}
 
-pub use self::tcp::{TcpListener, TcpStream};
-pub use self::udp::UdpSocket;
+cfg_udp! {
+    mod udp;
+    pub use self::udp::UdpSocket;
+}
+
+#[cfg(unix)]
+cfg_uds! {
+    mod uds;
+    pub use self::uds::{SocketAddr, UnixDatagram, UnixListener, UnixStream};
+}

@@ -1,13 +1,10 @@
-# 0.6.21 (November 27, 2019)
+# 0.7.0 alpha.1
 
-### Fixed
-- remove `=` dependency on `cfg-if`.
+Currently the changelog for v0.7.0 is incomplete, this tracked in issue #1217.
 
-# 0.6.20 (November 21, 2019)
-
-### Fixed
-- Use default IOCP concurrency value (#1161).
-- setting FD_CLOEXEC in pipe (#1095).
+* The `join_multicast_v4` and `leave_multicast_v4` methods now take their
+  `Ipv4Addr` arguments by value rather than by reference.
+* Fix lazycell related compilation issues.
 
 # 0.6.19 (May 28, 2018)
 

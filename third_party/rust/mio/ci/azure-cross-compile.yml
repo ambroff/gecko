@@ -2,55 +2,58 @@ parameters:
   vmImage: ubuntu-16.04
 
 jobs:
-- job: ${{ parameters.name }}
-  displayName: Cross
-  strategy:
-    matrix:
-      iOS:
-        vmImage: macOS-10.13
-        target: x86_64-apple-ios
+  - job: ${{ parameters.name }}
+    displayName: Cross
+    strategy:
+      matrix:
+        iOS_64:
+          vmImage: macOS-10.13
+          target: x86_64-apple-ios
 
-      Android:
-        vmImage: ubuntu-16.04
-        target: arm-linux-androideabi
+        iOS_32:
+          vmImage: macOS-10.13
+          target: i386-apple-ios
 
-      Android_64:
-        vmImage: ubuntu-16.04
-        target: aarch64-linux-android
+        iOS_ARM:
+          vmImage: macOS-10.13
+          target: armv7s-apple-ios
 
-      NetBSD:
-        vmImage: ubuntu-16.04
-        target: x86_64-unknown-netbsd
+        Android:
+          vmImage: ubuntu-16.04
+          target: arm-linux-androideabi
 
-      Solaris:
-        vmImage: ubuntu-16.04
-        target: x86_64-sun-solaris
+        Android_ARM64:
+          vmImage: ubuntu-16.04
+          target: aarch64-linux-android
 
-  pool:
-    vmImage: $(vmImage)
+        Android_32:
+          vmImage: ubuntu-16.04
+          target: i686-unknown-linux-gnu
 
-  steps:
-    - template: azure-install-rust.yml
-      parameters:
-        rust_version: stable
+        NetBSD:
+          vmImage: ubuntu-16.04
+          target: x86_64-unknown-netbsd
 
-    - script: rustup target add $(target)
-      displayName: "Add target"
+        Solaris:
+          vmImage: ubuntu-16.04
+          target: x86_64-sun-solaris
 
-    - script: cargo check --target $(target)
-      displayName: Check source
+    pool:
+      vmImage: $(vmImage)
 
-    - script: cargo check --tests --target $(target)
-      displayName: Check tests
+    steps:
+      - template: azure-install-rust.yml
+        parameters:
+          rust_version: stable
 
-    - script: cargo check --examples --target $(target)
-      displayName: Check examples
+      - script: rustup target add $(target)
+        displayName: "Add target"
 
-    - script: cargo check --target $(target) --no-default-features
-      displayName: Check source (no default features)
+      - script: cargo check --target $(target)
+        displayName: Check source
 
-    - script: cargo check --tests --target $(target) --no-default-features
-      displayName: Check tests (no default features)
+      - script: cargo check --tests --target $(target) --all-features
+        displayName: Check tests
 
-    - script: cargo check --examples --target $(target) --no-default-features
-      displayName: Check examples (no default features)
+      - script: cargo check --examples --target $(target) --all-features
+        displayName: Check examples

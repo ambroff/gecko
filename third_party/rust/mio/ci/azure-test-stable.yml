@@ -3,43 +3,51 @@ parameters:
   rust_version: stable
 
 jobs:
-- job: ${{ parameters.name }}
-  displayName: ${{ parameters.displayName }}
-  strategy:
-    matrix:
-      Linux:
-        vmImage: ubuntu-16.04
+  - job: ${{ parameters.name }}
+    displayName: ${{ parameters.displayName }}
+    strategy:
+      matrix:
+        Linux:
+          vmImage: ubuntu-16.04
 
-      ${{ if parameters.cross }}:
-        MacOS:
-          vmImage: macOS-10.13
-        Windows:
-          vmImage: vs2017-win2016
-  pool:
-    vmImage: $(vmImage)
+        ${{ if parameters.cross }}:
+          MacOS:
+            vmImage: macOS-10.13
+          Windows:
+            vmImage: vs2017-win2016
+    pool:
+      vmImage: $(vmImage)
 
-  steps:
-  - template: azure-install-rust.yml
-    parameters:
-      rust_version: ${{ parameters.rust_version }}
+    variables:
+      RUST_BACKTRACE: full
 
-  - script: |
-      cargo update
-      cargo update -p cfg-if --precise 0.1.9
-      cargo ${{ parameters.cmd }}
-    displayName: cargo ${{ parameters.cmd }}
-    env:
-      CI: 'True'
+    steps:
+      - template: azure-install-rust.yml
+        parameters:
+          rust_version: ${{ parameters.rust_version }}
+      
+      - ${{ if eq(parameters.cmd, 'test') }}:
+          - script: |
+              cargo install cargo-hack
+              cargo hack check --feature-powerset --skip guide
+            displayName: Check feature powerset
 
-  - script: cargo ${{ parameters.cmd }} --no-default-features
-    displayName: cargo ${{ parameters.cmd }} --no-default-features
-    env:
-      CI: 'True'
+      - ${{ if eq(parameters.posix_poll, false) }}:
+          - script: cargo ${{ parameters.cmd }} --all-features
+            displayName: cargo ${{ parameters.cmd }} --all-features
+            env:
+              CI: "True"
 
-  - ${{ if eq(parameters.cmd, 'test') }}:
-    - script: cargo doc --no-deps
-      displayName: cargo doc --no-deps
+      - ${{ if eq(parameters.posix_poll, true) }}:
+          - script: cargo ${{ parameters.cmd }} --features "os-poll os-util tcp udp uds"
+            displayName: cargo ${{ parameters.cmd }} --features "os-poll os-util tcp udp uds"
+            env:
+              CI: "True"
 
-  - ${{ if parameters.benches }}:
-    - script: cargo check --benches
-      displayName: Check benchmarks
+      - ${{ if eq(parameters.cmd, 'test') }}:
+          - script: cargo doc --no-deps
+            displayName: cargo doc --no-deps
+
+      - ${{ if parameters.benches }}:
+          - script: cargo check --benches
+            displayName: Check benchmarks
